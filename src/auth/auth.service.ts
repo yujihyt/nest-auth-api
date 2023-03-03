@@ -11,16 +11,16 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async signUp(user: User): Promise<{ access_token: string }> {
+  async signUp(user: User): Promise<User> {
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const newUser = { ...user, password: hashedPassword };
     await this.usersService.create(newUser);
     const payload = { email: newUser.email, sub: newUser.id };
-    const access_token = this.jwtService.sign(payload);
-    return { access_token };
+    const token = this.jwtService.sign(payload);
+    return { ...newUser, token };
   }
 
-  async signIn(user: User): Promise<{ access_token: string }> {
+  async signIn(user: User): Promise<User> {
     const foundUser = await this.usersService.findOneByEmail(user.email);
     if (!foundUser) {
       throw new Error('Invalid credentials');
@@ -33,7 +33,7 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
     const payload = { email: foundUser.email, sub: foundUser.id };
-    const access_token = this.jwtService.sign(payload);
-    return { access_token };
+    const token = this.jwtService.sign(payload);
+    return { ...foundUser, token };
   }
 }
